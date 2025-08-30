@@ -7,3 +7,7 @@ func SetupUnprotectedRoutes(app *fiber.App) {
 		return c.JSON(fiber.Map{"status": "healthy"})
 	})
 }
+
+func SetupProtectedRoutes(app *fiber.App) {
+	// NOTE: All routes which are to be accessed AFTER authorization are to be defined here 
+}
