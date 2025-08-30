@@ -5,10 +5,13 @@ import (
 	"os"
 
 	"github.com/Alan-J-Bibins/ServConq-be/routes"
+	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -18,6 +21,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	db := InitDb()
 	app := fiber.New()
 	app.Use(logger.New())
 
@@ -29,5 +33,21 @@ func main() {
 
 	routes.SetupUnprotectedRoutes(app)
 
+	db.AutoMigrate(&schema.User{})
 	log.Fatal(app.Listen(port))
+}
+
+func InitDb() *gorm.DB {
+	dsn := os.Getenv("DATABASE_URL")
+
+	db, err := gorm.Open(postgres.Open(dsn))
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println("Database connection established succesfully")
+	}
+
+	schema.RegisterCUIDCallback(db)
+
+	return db
 }
