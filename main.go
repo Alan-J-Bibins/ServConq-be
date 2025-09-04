@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Alan-J-Bibins/ServConq-be/routes"
+	"github.com/Alan-J-Bibins/ServConq-be/endpoints"
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -31,7 +31,7 @@ func main() {
 		AllowOrigins: "http://localhost:5173",
 	}))
 
-	routes.SetupUnprotectedRoutes(app)
+	endpoints.SetupUnprotectedEndpoints(app)
 
 	db.AutoMigrate(&schema.User{})
 	log.Fatal(app.Listen(port))
