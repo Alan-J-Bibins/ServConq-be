@@ -32,6 +32,7 @@ func main() {
 	}))
 
 	endpoints.SetupUnprotectedEndpoints(app)
+	endpoints.SetupProtectedEndpoints(app)
 
 	db.AutoMigrate(&schema.User{})
 	log.Fatal(app.Listen(port))
