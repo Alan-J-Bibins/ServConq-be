@@ -34,7 +34,29 @@ func main() {
 	endpoints.SetupUnprotectedEndpoints(app)
 	endpoints.SetupProtectedEndpoints(app)
 
-	db.AutoMigrate(&schema.User{})
+	db.AutoMigrate(
+		&schema.User{},
+		&schema.Team{},
+		&schema.Role{},
+		&schema.Permission{},
+		&schema.RolePermission{},
+		&schema.DataCenter{},
+		&schema.AgentBinary{},
+		&schema.NetworkingDeviceType{},
+		&schema.StorageSystemType{},
+		&schema.NetworkingDevice{},
+		&schema.StorageSystem{},
+		&schema.PowerInfrastructure{},
+		&schema.Server{},
+		&schema.ContainerImage{},
+		&schema.ContainerEnvVar{},
+		&schema.ContainerPort{},
+		&schema.Container{},
+		&schema.Event{},
+		&schema.Log{},
+		&schema.TeamMember{},
+		&schema.TeamDataCenterAccess{},
+	)
 	log.Fatal(app.Listen(port))
 }
 
