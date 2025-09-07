@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Alan-J-Bibins/ServConq-be/database"
 	"github.com/Alan-J-Bibins/ServConq-be/endpoints"
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +22,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	db := InitDb()
+	database.DB = InitDb()
 	app := fiber.New()
 	app.Use(logger.New())
 
@@ -34,7 +35,7 @@ func main() {
 	endpoints.SetupUnprotectedEndpoints(app)
 	endpoints.SetupProtectedEndpoints(app)
 
-	db.AutoMigrate(
+	database.DB.AutoMigrate(
 		&schema.User{},
 		&schema.Team{},
 		&schema.Role{},
