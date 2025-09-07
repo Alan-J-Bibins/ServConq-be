@@ -11,7 +11,7 @@ import (
 func LoginRequestHandler(c *fiber.Ctx) error{
 
 	type LoginDetails struct {
-		User string `json:"user"`
+		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 
@@ -21,7 +21,7 @@ func LoginRequestHandler(c *fiber.Ctx) error{
 		return fiber.NewError(fiber.StatusBadRequest, "Failed to parse request body")
 	}
 
-	user := loginDetails.User;
+	user := loginDetails.Username;
 	password := loginDetails.Password;
 
 	if user != "john" || password != "doe" {

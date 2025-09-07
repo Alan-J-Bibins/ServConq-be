@@ -26,6 +26,6 @@ func SetupProtectedEndpoints(app *fiber.App) {
 	}))
 
 	app.Get("/restricted", func(c *fiber.Ctx) error {
-		return c.SendString("Hello there")
+		return c.JSON(fiber.Map{"msg": "You are an authorized user"})
 	})
 }
