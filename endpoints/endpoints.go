@@ -14,10 +14,11 @@ func SetupUnprotectedEndpoints(app *fiber.App) {
 	})
 
 	app.Post("/login", services.LoginRequestHandler)
+	app.Post("/register", services.RegisterRequestHandler)
 }
 
 func SetupProtectedEndpoints(app *fiber.App) {
-	// NOTE: All routes which are to be accessed AFTER authorization are to be defined here 
+	// NOTE: All routes which are to be accessed AFTER authorization are to be defined here
 
 	signingKey := os.Getenv("SIGNING_KEY")
 

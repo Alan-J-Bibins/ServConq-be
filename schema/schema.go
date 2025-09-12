@@ -23,25 +23,10 @@ func RegisterCUIDCallback(db *gorm.DB) {
 	})
 }
 
-//sample for coding
-
-/*type User struct {
-	ID           string `gorm:"primarykey"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time `gorm:"index"`
-	Email        string
-	Name         string
-	PasswordHash string
-}*/
-
-//=============== START OF CODE =====================
-
 // -------------------- Access Control --------------------
 
 type User struct {
 	ID        string `gorm:"primaryKey"`
-	Username  string `gorm:"unique;not null"`
 	Name      string `gorm:"not null"`
 	Email     string `gorm:"unique;not null"`
 	Password  string `gorm:"not null"`

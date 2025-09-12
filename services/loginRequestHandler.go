@@ -4,33 +4,46 @@ import (
 	"os"
 	"time"
 
+	"github.com/Alan-J-Bibins/ServConq-be/database"
+	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func LoginRequestHandler(c *fiber.Ctx) error{
+func LoginRequestHandler(c *fiber.Ctx) error {
 
 	type LoginDetails struct {
-		Username string `json:"username"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
 	signingKey := os.Getenv("SIGNING_KEY")
 	loginDetails := new(LoginDetails)
-	if err := c.BodyParser(loginDetails) ; err != nil {
+	if err := c.BodyParser(loginDetails); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Failed to parse request body")
 	}
 
-	user := loginDetails.Username;
-	password := loginDetails.Password;
+	email := loginDetails.Email
+	password := loginDetails.Password
 
-	if user != "john" || password != "doe" {
-		return c.SendStatus(fiber.StatusUnauthorized)
+	queriedUser := &schema.User{}
+	if err := database.DB.Where("email = ?", email).First(queriedUser).Error; err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "User does not exist",
+		})
 	}
 
-	claims := jwt.MapClaims {
-		"name": "John Doe",
-		"exp": time.Now().Add(time.Hour * 72).Unix(),
+	if err := bcrypt.CompareHashAndPassword([]byte(queriedUser.Password), []byte(password)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Password does not match",
+		})
+	}
+
+	claims := jwt.MapClaims{
+		"name":  queriedUser.Name,
+		"email": queriedUser.Email,
+		"exp":   time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
