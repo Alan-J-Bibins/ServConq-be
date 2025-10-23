@@ -186,7 +186,7 @@ type TeamMember struct {
 	User     User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	TeamID   string
 	Team     Team           `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Role     TeamMemberRole `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Role     TeamMemberRole
 	JoinedAt time.Time
 }
 
