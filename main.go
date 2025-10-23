@@ -56,7 +56,6 @@ func main() {
 		&schema.Event{},
 		&schema.Log{},
 		&schema.TeamMember{},
-		&schema.TeamDataCenterAccess{},
 	)
 	log.Fatal(app.Listen(port))
 }

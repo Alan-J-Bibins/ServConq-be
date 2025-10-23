@@ -42,8 +42,7 @@ type Team struct {
 	Description string
 	CreatedAt   time.Time
 
-	TeamMembers []TeamMember           `gorm:"foreignKey:TeamID"`
-	Access      []TeamDataCenterAccess `gorm:"foreignKey:TeamID"`
+	TeamMembers []TeamMember `gorm:"foreignKey:TeamID"`
 }
 
 type Role struct {
@@ -77,11 +76,12 @@ type DataCenter struct {
 	Location    string
 	Description string
 	CreatedAt   time.Time
+	TeamID      string
+	Team        Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
-	Servers          []Server               `gorm:"foreignKey:DataCenterID"`
-	NetworkingDevice []NetworkingDevice     `gorm:"foreignKey:DataCenterID"`
-	Logs             []Log                  `gorm:"foreignKey:DataCenterID"`
-	Access           []TeamDataCenterAccess `gorm:"foreignKey:DataCenterID"`
+	Servers          []Server           `gorm:"foreignKey:DataCenterID"`
+	NetworkingDevice []NetworkingDevice `gorm:"foreignKey:DataCenterID"`
+	Logs             []Log              `gorm:"foreignKey:DataCenterID"`
 }
 
 type Server struct {
@@ -197,8 +197,11 @@ type Log struct {
 type TeamMember struct {
 	ID       string `gorm:"primaryKey"`
 	UserID   string
+	User     User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	TeamID   string
+	Team     Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	RoleID   string
+	Role     Role `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	JoinedAt time.Time
 }
 
@@ -218,8 +221,8 @@ type StorageSystemType struct {
 	Systems []StorageSystem `gorm:"foreignKey:TypeID"`
 }
 
-type TeamDataCenterAccess struct {
-	ID           string `gorm:"primaryKey"`
-	TeamID       string
-	DataCenterID string
-}
+// type TeamDataCenterAccess struct {
+// 	ID           string `gorm:"primaryKey"`
+// 	TeamID       string
+// 	DataCenterID string
+// }
