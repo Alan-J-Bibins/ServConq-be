@@ -8,6 +8,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type TeamMemberRole string
+
+const (
+	TeamMemberRoleOwner    TeamMemberRole = "OWNER"
+	TeamMemberRoleAdmin    TeamMemberRole = "ADMIN"
+	TeamMemberRoleOperator TeamMemberRole = "OPERATOR"
+	TeamMemberRoleViewer   TeamMemberRole = "VIEWER"
+)
+
 // NOTE: We need this function to initialize the ID field of tables with CUID
 func RegisterCUIDCallback(db *gorm.DB) {
 	db.Callback().Create().Before("gorm:before_create").Register("set_cuid_if_empty", func(tx *gorm.DB) {
@@ -43,29 +52,6 @@ type Team struct {
 	CreatedAt   time.Time
 
 	TeamMembers []TeamMember `gorm:"foreignKey:TeamID"`
-}
-
-type Role struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Description string
-
-	Permissions []RolePermission `gorm:"foreignKey:RoleID"`
-	Members     []TeamMember     `gorm:"foreignKey:RoleID"`
-}
-
-type Permission struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Description string
-
-	Roles []RolePermission `gorm:"foreignKey:PermissionID"`
-}
-
-type RolePermission struct {
-	ID           string `gorm:"primaryKey"`
-	RoleID       string
-	PermissionID string
 }
 
 // -------------------- Infrastructure --------------------
@@ -199,9 +185,8 @@ type TeamMember struct {
 	UserID   string
 	User     User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	TeamID   string
-	Team     Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	RoleID   string
-	Role     Role `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Team     Team           `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Role     TeamMemberRole `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	JoinedAt time.Time
 }
 

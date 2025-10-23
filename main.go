@@ -38,9 +38,6 @@ func main() {
 	database.DB.AutoMigrate(
 		&schema.User{},
 		&schema.Team{},
-		&schema.Role{},
-		&schema.Permission{},
-		&schema.RolePermission{},
 		&schema.DataCenter{},
 		&schema.AgentBinary{},
 		&schema.NetworkingDeviceType{},
