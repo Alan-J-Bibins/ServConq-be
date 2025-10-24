@@ -1,18 +1,24 @@
-// Services related to Data Centers go here
 package services
 
 import (
-	"log"
-
 	"github.com/Alan-J-Bibins/ServConq-be/database"
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/Alan-J-Bibins/ServConq-be/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
-func DataCenterCreateRequestHandler(c *fiber.Ctx) error {
-	// userDetails := utils.GetUser(c)
+// Struct for returning joined data
+type DataCenterWithTeam struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Location    string `json:"location"`
+	TeamID      string `json:"team_id"`
+	TeamName    string `json:"team_name"`
+}
 
+// 🧩 Create a new Data Center
+func DataCenterCreateRequestHandler(c *fiber.Ctx) error {
 	type NewDataCenterDetails struct {
 		Name        string `json:"name"`
 		Location    string `json:"location"`
@@ -21,15 +27,12 @@ func DataCenterCreateRequestHandler(c *fiber.Ctx) error {
 	}
 
 	dataCenterDetails := new(NewDataCenterDetails)
-
 	if err := c.BodyParser(dataCenterDetails); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "Failed to parse request body",
 		})
 	}
-
-	// TODO: Check if the user is indeed a part of this team
 
 	newDataCenter := schema.DataCenter{
 		Name:        dataCenterDetails.Name,
@@ -38,7 +41,7 @@ func DataCenterCreateRequestHandler(c *fiber.Ctx) error {
 		TeamID:      dataCenterDetails.TeamID,
 	}
 
-	if err := database.DB.Create(newDataCenter).Error; err != nil {
+	if err := database.DB.Create(&newDataCenter).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
@@ -51,11 +54,11 @@ func DataCenterCreateRequestHandler(c *fiber.Ctx) error {
 	})
 }
 
+// 🧩 Fetch all Data Centers visible to logged-in user
 func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
-
 	userDetails := utils.GetUser(c)
 
-	//first find which all teams the user is in
+	// Find all teams the user belongs to
 	var userTeamMemberships []schema.TeamMember
 	if err := database.DB.Find(&userTeamMemberships, "user_id = ?", userDetails.ID).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -64,23 +67,59 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// extract the teamId's
+	// Extract team IDs
 	teamIDs := make([]string, 0, len(userTeamMemberships))
-	for _, memberships := range userTeamMemberships {
-		teamIDs = append(teamIDs, memberships.TeamID)
+	for _, membership := range userTeamMemberships {
+		teamIDs = append(teamIDs, membership.TeamID)
 	}
-	log.Println("TEAMID, ", teamIDs)
 
-	// next we get the data of all the datacenters whose has any of the TeamID's present in userTeamMemberships
-	var results []schema.DataCenter
-	if err := database.DB.Where("team_id IN ?", teamIDs).Find(&results).Error; err != nil {
+	// Fetch datacenters belonging to these teams
+	var dataCenters []schema.DataCenter
+	if err := database.DB.Where("team_id IN ?", teamIDs).Find(&dataCenters).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	// Fetch team names for those IDs
+	var teams []schema.Team
+	if err := database.DB.Where("id IN ?", teamIDs).Find(&teams).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	// Create a lookup map for quick access
+	teamNameMap := make(map[string]string)
+	for _, t := range teams {
+		teamNameMap[t.ID] = t.Name
+	}
+
+	// Combine datacenter + team name
+	type DataCenterWithTeam struct {
+		ID          string `json:"id"`
+		Name        string `json:"name"`
+		Location    string `json:"location"`
+		Description string `json:"description"`
+		TeamID      string `json:"team_id"`
+		TeamName    string `json:"team_name"`
+	}
+
+	results := make([]DataCenterWithTeam, 0, len(dataCenters))
+	for _, dc := range dataCenters {
+		results = append(results, DataCenterWithTeam{
+			ID:          dc.ID,
+			Name:        dc.Name,
+			Location:    dc.Location,
+			Description: dc.Description,
+			TeamID:      dc.TeamID,
+			TeamName:    teamNameMap[dc.TeamID],
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success":     true,
 		"error":       nil,
 		"datacenters": results,

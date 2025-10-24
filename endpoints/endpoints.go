@@ -30,6 +30,7 @@ func SetupProtectedEndpoints(app *fiber.App) {
 		return c.JSON(fiber.Map{"msg": "You are an authorized user"})
 	})
 
+	app.Post("/dataCenter", services.DataCenterCreateRequestHandler)
 	app.Get("/dataCenter", services.DataCenterFindAllRequestHandler)
 	app.Post("/team", services.TeamCreateRequestHandler)
 	app.Get("/team", services.TeamListRequestHandler)
