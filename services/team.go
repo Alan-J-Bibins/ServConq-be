@@ -52,3 +52,44 @@ func TeamCreateRequestHandler(c *fiber.Ctx) error {
 		"error":   nil,
 	})
 }
+
+func TeamListRequestHandler(c *fiber.Ctx) error {
+	userDetails := utils.GetUser(c)
+
+	var userTeamMemberships []schema.TeamMember
+	if err := database.DB.Preload("Team").Find(&userTeamMemberships, "user_id = ?", userDetails.ID).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	type ReturnFormat struct {
+		UserID      string                `json:"userId"`
+		Role        schema.TeamMemberRole `json:"role"`
+		Team        schema.Team           `json:"team"`
+		MemberCount int64                 `json:"memberCount"`
+	}
+
+	teamList := make([]ReturnFormat, 0, len(userTeamMemberships))
+	for _, membership := range userTeamMemberships {
+
+		var count int64
+		database.DB.Model(&schema.TeamMember{}).Where("team_id = ?", membership.TeamID).Count(&count)
+
+		element := ReturnFormat{
+			UserID:      membership.UserID,
+			Role:        membership.Role,
+			Team:        membership.Team,
+			MemberCount: count,
+		}
+		teamList = append(teamList, element)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":  true,
+		"error":    nil,
+		"teamList": teamList,
+	})
+
+}

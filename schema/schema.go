@@ -46,10 +46,10 @@ type User struct {
 }
 
 type Team struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Description string
-	CreatedAt   time.Time
+	ID          string    `gorm:"primaryKey" json:"id"`
+	Name        string    `gorm:"unique;not null" json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"createdAt"`
 
 	TeamMembers []TeamMember `gorm:"foreignKey:TeamID"`
 }
@@ -185,7 +185,7 @@ type TeamMember struct {
 	UserID   string
 	User     User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	TeamID   string
-	Team     Team           `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Team     Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Role     TeamMemberRole
 	JoinedAt time.Time
 }

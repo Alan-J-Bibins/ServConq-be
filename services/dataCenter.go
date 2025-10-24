@@ -55,7 +55,7 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 
 	//first find which all teams the user is in
 	var userTeamMemberships []schema.TeamMember
-	if err := database.DB.Find(&userTeamMemberships, "userId = ?", userDetails.ID).Error; err != nil {
+	if err := database.DB.Find(&userTeamMemberships, "user_id = ?", userDetails.ID).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
