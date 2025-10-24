@@ -2,6 +2,8 @@
 package services
 
 import (
+	"log"
+
 	"github.com/Alan-J-Bibins/ServConq-be/database"
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/Alan-J-Bibins/ServConq-be/utils"
@@ -67,10 +69,11 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 	for _, memberships := range userTeamMemberships {
 		teamIDs = append(teamIDs, memberships.TeamID)
 	}
+	log.Println("TEAMID, ", teamIDs)
 
 	// next we get the data of all the datacenters whose has any of the TeamID's present in userTeamMemberships
 	var results []schema.DataCenter
-	if err := database.DB.Where("teamId IN", teamIDs).Find(&results).Error; err != nil {
+	if err := database.DB.Where("team_id IN ?", teamIDs).Find(&results).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
