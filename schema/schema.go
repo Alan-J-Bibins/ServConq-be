@@ -11,10 +11,9 @@ import (
 type TeamMemberRole string
 
 const (
-	TeamMemberRoleOwner    TeamMemberRole = "OWNER"
-	TeamMemberRoleAdmin    TeamMemberRole = "ADMIN"
-	TeamMemberRoleOperator TeamMemberRole = "OPERATOR"
-	TeamMemberRoleViewer   TeamMemberRole = "VIEWER"
+	TeamMemberRoleOwner    TeamMemberRole = "OWNER"    // Make datacenters under their team and be able to delete datacenters
+	TeamMemberRoleAdmin    TeamMemberRole = "ADMIN"    // Make Servers / Delete Servers but cannot delete datacenters
+	TeamMemberRoleOperator TeamMemberRole = "OPERATOR" // Make Containers and Run shit
 )
 
 // NOTE: We need this function to initialize the ID field of tables with CUID
@@ -35,14 +34,14 @@ func RegisterCUIDCallback(db *gorm.DB) {
 // -------------------- Access Control --------------------
 
 type User struct {
-	ID        string `gorm:"primaryKey"`
-	Name      string `gorm:"not null"`
-	Email     string `gorm:"unique;not null"`
-	Password  string `gorm:"not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        string    `gorm:"primaryKey" json:"id"`
+	Name      string    `gorm:"not null" json:"name"`
+	Email     string    `gorm:"unique;not null" json:"email"`
+	Password  string    `gorm:"not null" json:"password"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 
-	TeamMembers []TeamMember `gorm:"foreignKey:UserID"`
+	TeamMembers []TeamMember `gorm:"foreignKey:UserID" json:"teamMembers"`
 }
 
 type Team struct {
@@ -71,15 +70,11 @@ type DataCenter struct {
 }
 
 type Server struct {
-	ID                    string `gorm:"primaryKey"`
-	DataCenterID          string
-	Hostname              string `gorm:"unique;not null"`
-	IPAddress             string `gorm:"unique;not null"`
-	OS                    string
-	StorageSystemID       string
-	PowerInfrastructureID string
-	AgentBinaryID         string
-	CreatedAt             time.Time
+	ID               string `gorm:"primaryKey"`
+	DataCenterID     string
+	Hostname         string `gorm:"not null"`
+	ConnectionString string `gorm:"unique;not null"`
+	CreatedAt        time.Time
 
 	Containers []Container `gorm:"foreignKey:ServerID"`
 	Events     []Event     `gorm:"foreignKey:ServerID"`
@@ -121,22 +116,11 @@ type ContainerPort struct {
 	Protocol    string
 }
 
-type AgentBinary struct {
-	ID          string `gorm:"primaryKey"`
-	Version     string
-	Checksum    string
-	Description string
-
-	Servers []Server `gorm:"foreignKey:AgentBinaryID"`
-}
-
 type StorageSystem struct {
 	ID          string `gorm:"primaryKey"`
 	TypeID      string
 	CapacityGB  int
 	Description string
-
-	Servers []Server `gorm:"foreignKey:StorageSystemID"`
 }
 
 type PowerInfrastructure struct {
@@ -144,8 +128,6 @@ type PowerInfrastructure struct {
 	Type        string
 	CapacityKW  int
 	Description string
-
-	Servers []Server `gorm:"foreignKey:PowerInfrastructureID"`
 }
 
 type Event struct {
@@ -181,13 +163,13 @@ type Log struct {
 // -------------------- Supporting Tables --------------------
 
 type TeamMember struct {
-	ID       string `gorm:"primaryKey"`
-	UserID   string
-	User     User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	TeamID   string
-	Team     Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Role     TeamMemberRole
-	JoinedAt time.Time
+	ID       string         `gorm:"primaryKey" json:"id"`
+	UserID   string         `gorm:"not null" json:"userId"`
+	User     User           `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"user"`
+	TeamID   string         `json:"teamId"`
+	Team     Team           `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"team"`
+	Role     TeamMemberRole `json:"role"`
+	JoinedAt time.Time      `json:"joinedAt"`
 }
 
 type NetworkingDeviceType struct {
