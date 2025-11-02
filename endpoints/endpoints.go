@@ -15,6 +15,8 @@ func SetupUnprotectedEndpoints(app *fiber.App) {
 
 	app.Post("/login", services.LoginRequestHandler)
 	app.Post("/register", services.RegisterRequestHandler)
+	app.Get("/metrics/:dataCenterId", services.AgentMetricsGetRequestHandler)
+	app.Get("/stream/:dataCenterId", services.AgentMetricsSSEHandler)
 }
 
 func SetupProtectedEndpoints(app *fiber.App) {
@@ -34,4 +36,6 @@ func SetupProtectedEndpoints(app *fiber.App) {
 	app.Get("/dataCenter", services.DataCenterFindAllRequestHandler)
 	app.Post("/team", services.TeamCreateRequestHandler)
 	app.Get("/team", services.TeamListRequestHandler)
+	app.Get("/teamMember/:dataCenterId", services.TeamGetMembershipByDataCenterId)
+	app.Post("/server", services.CreateServerRequestHandler)
 }

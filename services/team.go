@@ -1,10 +1,13 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/Alan-J-Bibins/ServConq-be/database"
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/Alan-J-Bibins/ServConq-be/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/nrednav/cuid2"
 	"gorm.io/gorm"
 )
 
@@ -24,11 +27,18 @@ func TeamCreateRequestHandler(c *fiber.Ctx) error {
 			"error":   "Failed to parse request body",
 		})
 	}
-
+	    generate, err := cuid2.Init(
+        cuid2.WithLength(6),
+    )
+    if err != nil {
+        fmt.Println("Error initializing CUID generator:", err)
+        return err
+    }
 	database.DB.Transaction(func(tx *gorm.DB) error {
 		newTeam := schema.Team{
 			Name:        teamCreateRequestContent.Name,
 			Description: teamCreateRequestContent.Description,
+			JoinToken:   generate(),
 		}
 		if err := tx.Create(&newTeam).Error; err != nil {
 			return err
