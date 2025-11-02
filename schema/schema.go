@@ -64,9 +64,9 @@ type DataCenter struct {
 	TeamID      string
 	Team        Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
-	Servers          []Server           `gorm:"foreignKey:DataCenterID"`
-	NetworkingDevice []NetworkingDevice `gorm:"foreignKey:DataCenterID"`
-	Logs             []Log              `gorm:"foreignKey:DataCenterID"`
+	Servers []Server `gorm:"foreignKey:DataCenterID"`
+
+	Logs []Log `gorm:"foreignKey:DataCenterID"`
 }
 
 type Server struct {
@@ -76,21 +76,7 @@ type Server struct {
 	ConnectionString string `gorm:"unique;not null"`
 	CreatedAt        time.Time
 
-	Containers []Container `gorm:"foreignKey:ServerID"`
-	Events     []Event     `gorm:"foreignKey:ServerID"`
-	Logs       []Log       `gorm:"foreignKey:ServerID"`
-}
-
-type Container struct {
-	ID               string `gorm:"primaryKey"`
-	ServerID         string
-	Name             string
-	ContainerImageID string
-	StorageLimitGB   int
-	CreatedAt        time.Time
-
-	EnvVars []ContainerEnvVar `gorm:"foreignKey:ContainerID"`
-	Ports   []ContainerPort   `gorm:"foreignKey:ContainerID"`
+	Logs []Log `gorm:"foreignKey:ServerID"`
 }
 
 type ContainerImage struct {
@@ -98,63 +84,12 @@ type ContainerImage struct {
 	Name        string
 	Version     string
 	RegistryURL string
-
-	Containers []Container `gorm:"foreignKey:ContainerImageID"`
-}
-
-type ContainerEnvVar struct {
-	ID          string `gorm:"primaryKey"`
-	ContainerID string
-	Key         string
-	Value       string
-}
-
-type ContainerPort struct {
-	ID          string `gorm:"primaryKey"`
-	ContainerID string
-	Port        int
-	Protocol    string
-}
-
-type StorageSystem struct {
-	ID          string `gorm:"primaryKey"`
-	TypeID      string
-	CapacityGB  int
-	Description string
-}
-
-type PowerInfrastructure struct {
-	ID          string `gorm:"primaryKey"`
-	Type        string
-	CapacityKW  int
-	Description string
-}
-
-type Event struct {
-	ID        string `gorm:"primaryKey"`
-	ServerID  string
-	EventType string
-	Message   string
-	Timestamp time.Time
-
-	Logs []Log `gorm:"foreignKey:EventID"`
-}
-
-type NetworkingDevice struct {
-	ID           string `gorm:"primaryKey"`
-	DataCenterID string
-	TypeID       string
-	Manufacturer string
-	Model        string
-	IPAddress    string
-	Description  string
 }
 
 type Log struct {
 	ID           string `gorm:"primaryKey"`
 	DataCenterID string
 	ServerID     string
-	EventID      string
 	Message      string
 	Level        string
 	Timestamp    time.Time
@@ -171,25 +106,3 @@ type TeamMember struct {
 	Role     TeamMemberRole `json:"role"`
 	JoinedAt time.Time      `json:"joinedAt"`
 }
-
-type NetworkingDeviceType struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string
-	Description string
-
-	Devices []NetworkingDevice `gorm:"foreignKey:TypeID"`
-}
-
-type StorageSystemType struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string
-	Description string
-
-	Systems []StorageSystem `gorm:"foreignKey:TypeID"`
-}
-
-// type TeamDataCenterAccess struct {
-// 	ID           string `gorm:"primaryKey"`
-// 	TeamID       string
-// 	DataCenterID string
-// }
