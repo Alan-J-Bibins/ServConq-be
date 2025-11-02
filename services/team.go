@@ -27,13 +27,13 @@ func TeamCreateRequestHandler(c *fiber.Ctx) error {
 			"error":   "Failed to parse request body",
 		})
 	}
-	    generate, err := cuid2.Init(
-        cuid2.WithLength(6),
-    )
-    if err != nil {
-        fmt.Println("Error initializing CUID generator:", err)
-        return err
-    }
+	generate, err := cuid2.Init(
+		cuid2.WithLength(6),
+	)
+	if err != nil {
+		fmt.Println("Error initializing CUID generator:", err)
+		return err
+	}
 	database.DB.Transaction(func(tx *gorm.DB) error {
 		newTeam := schema.Team{
 			Name:        teamCreateRequestContent.Name,
@@ -60,6 +60,28 @@ func TeamCreateRequestHandler(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
 		"error":   nil,
+	})
+}
+
+func TeamGetRequestHandler(c *fiber.Ctx) error {
+	teamId := c.Params("teamId")
+
+	var team schema.Team
+	err := database.DB.
+		Preload("TeamMembers.User").
+		Where("id = ?", teamId).
+		First(&team).Error
+
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"success": false,
+			"error":   "team not found",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"team":    team,
 	})
 }
 
@@ -102,4 +124,56 @@ func TeamListRequestHandler(c *fiber.Ctx) error {
 		"teamList": teamList,
 	})
 
+}
+func TeamJoinRequestHandler(c *fiber.Ctx) error {
+	user := utils.GetUser(c)
+
+	var req struct {
+		Token string `json:"token"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	// 1️⃣ Find team by join token
+	var team schema.Team
+	if err := database.DB.Where("join_token = ?", req.Token).First(&team).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Invalid team token"})
+	}
+
+	// 2️⃣ Check if user already belongs
+	var member schema.TeamMember
+	if err := database.DB.
+		Where("team_id = ? AND user_id = ?", team.ID, user.ID).
+		First(&member).Error; err == nil {
+
+		if member.Role == schema.TeamMemberRoleOwner {
+			return c.JSON(fiber.Map{
+				"alreadyJoined": true,
+				"role":          "OWNER",
+				"message":       "You are already the owner",
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"alreadyJoined": true,
+			"role":          member.Role,
+			"message":       "You are already part of this team",
+		})
+	}
+
+	// 3️⃣ Create membership
+	newMember := schema.TeamMember{
+		UserID: user.ID,
+		TeamID: team.ID,
+		Role:   schema.TeamMemberRoleOperator,
+	}
+	database.DB.Create(&newMember)
+
+	return c.JSON(fiber.Map{
+		"alreadyJoined": false,
+		"role":          "VIEWER",
+		"teamId":        team.ID,
+		"message":       "Successfully joined",
+	})
 }
