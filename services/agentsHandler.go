@@ -1,13 +1,16 @@
 package services
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp"
 )
 
 // Dummy metrics struct
@@ -78,6 +81,7 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
+	c.Set("Transfer-Encoding", "chunked")
 	log.Println("SEE HANDCLER IS HERE BROOOOO")
 
 	// dataCenterId := c.Params("dataCenterId")
@@ -87,53 +91,70 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 			ID:               "srv1",
 			DataCenterID:     "dc01",
 			Hostname:         "agent-1",
-			ConnectionString: "https://clear-moments-occur.loca.lt/metrics",
+			ConnectionString: "https://itchy-pears-prove.loca.lt",
 			CreatedAt:        time.Now(),
 		},
 	}
 
 	log.Println("HELLO THERE")
-	client := &http.Client{Timeout: 2 * time.Second}
 
-	ticker := time.NewTicker(5 * time.Second) // polling interval
-	defer ticker.Stop()
+	client := &http.Client{Timeout: 5 * time.Second}
 
-	for {
-		metricsBatch := make(map[string]interface{})
-
-		for _, server := range servers {
-			var metrics Metrics
-			resp, err := client.Get(server.ConnectionString)
-			if err != nil {
-				metricsBatch[server.ID] = fiber.Map{
-					"error":   err.Error(),
-					"success": false,
-				}
-				continue
-			}
-			err = json.NewDecoder(resp.Body).Decode(&metrics)
-			resp.Body.Close()
-			if err != nil {
-				metricsBatch[server.ID] = fiber.Map{
-					"error":   "JSON decode failed",
-					"success": false,
-				}
-				continue
-			}
-			metricsBatch[server.ID] = fiber.Map{
-				"success": true,
-				"metrics": metrics,
-			}
+	// Set the body stream writer
+	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
+		// Send initial comment to open stream
+		fmt.Fprint(w, ": connected\n\n")
+		if err := w.Flush(); err != nil {
+			log.Println("Flush error on initial:", err)
+			return
 		}
 
-		// Push metrics batch as SSE
-		outBytes, _ := json.Marshal(metricsBatch)
-		c.Write([]byte("data: " + string(outBytes) + "\n\n"))
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
 
-		// Important: In Fiber (fasthttp), there is no flush. Data is sent out as you write.
+		for range ticker.C {
+			metricsBatch := make(map[string]interface{})
 
-		time.Sleep(5 * time.Second) // wait before polling again
-		// If the client disconnects, writing will throw an error (not handled explicitly here, but you may want to check errors)
-	}
+			for _, server := range servers {
+				var metrics Metrics
+				resp, err := client.Get(server.ConnectionString + "/metrics")
+				if err != nil {
+					metricsBatch[server.ID] = fiber.Map{
+						"error":   err.Error(),
+						"success": false,
+					}
+					continue
+				}
+				err = json.NewDecoder(resp.Body).Decode(&metrics)
+				resp.Body.Close()
+				if err != nil {
+					metricsBatch[server.ID] = fiber.Map{
+						"error":   fmt.Sprintf("JSON decode failed, %s", err),
+						"success": false,
+					}
+					continue
+				}
+				metricsBatch[server.ID] = fiber.Map{
+					"success": true,
+					"metrics": metrics,
+				}
+			}
+
+			outBytes, _ := json.Marshal(metricsBatch)
+			// Write SSE data
+			_, err := fmt.Fprintf(w, "data: %s\n\n", string(outBytes))
+			if err != nil {
+				log.Println("Error writing to stream:", err)
+				return
+			}
+
+			if err := w.Flush(); err != nil {
+				log.Println("Flush error:", err)
+				return
+			}
+		}
+	}))
+
+	return nil
+
 }
-
