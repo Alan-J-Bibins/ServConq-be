@@ -39,7 +39,6 @@ func main() {
 		&schema.User{},
 		&schema.Team{},
 		&schema.DataCenter{},
-		&schema.AgentBinary{},
 		&schema.NetworkingDeviceType{},
 		&schema.StorageSystemType{},
 		&schema.NetworkingDevice{},
