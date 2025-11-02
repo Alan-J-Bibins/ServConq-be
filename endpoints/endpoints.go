@@ -45,4 +45,5 @@ func SetupProtectedEndpoints(app *fiber.App) {
 
 	// Server
 	app.Post("/server", services.CreateServerRequestHandler)
+	app.Patch("/server", services.EditServerRequestHandler)
 }

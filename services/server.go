@@ -22,7 +22,7 @@ func CreateServerRequestHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&content); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"error":   "Bruhwtfareyoudoign"+err.Error(),
+			"error":   "Bruhwtfareyoudoign" + err.Error(),
 		})
 	}
 
@@ -30,7 +30,7 @@ func CreateServerRequestHandler(c *fiber.Ctx) error {
 	if err := database.DB.Find(&userTeamMembership, "user_id = ? AND team_id = ?", userDetails.ID, content.TeamID).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"error":   "MYBRO"+err.Error(),
+			"error":   "MYBRO" + err.Error(),
 		})
 	}
 
@@ -62,4 +62,41 @@ func CreateServerRequestHandler(c *fiber.Ctx) error {
 		})
 	}
 
+}
+
+func EditServerRequestHandler(c *fiber.Ctx) error {
+	// userDetails := utils.GetUser(c)
+
+	type Content struct {
+		ServerID         string `json:"serverId"`
+		Hostname         string `json:"hostname"`
+		ConnectionString string `json:"connectionString"`
+	}
+
+	var content Content
+	if err := c.BodyParser(&content); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Failed to read request body: " + err.Error(),
+		})
+	}
+
+	// TODO: Check if the user is an OPERATOR or not
+
+	if err := database.DB.Model(&schema.Server{}).
+		Where("id = ?", content.ServerID).
+		Updates(schema.Server{
+			Hostname:         content.Hostname,
+			ConnectionString: content.ConnectionString,
+		}).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Entry Updation Failed: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"error":   nil,
+	})
 }
