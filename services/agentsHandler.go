@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Alan-J-Bibins/ServConq-be/database"
 	"github.com/Alan-J-Bibins/ServConq-be/schema"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
@@ -86,17 +87,26 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 
 	// dataCenterId := c.Params("dataCenterId")
 	// Get Servers for this data center from database, for now im using dummy data
-	var servers = []schema.Server{
-		{
-			ID:               "srv1",
-			DataCenterID:     "dc01",
-			Hostname:         "agent-1",
-			ConnectionString: "https://itchy-pears-prove.loca.lt",
-			CreatedAt:        time.Now(),
-		},
+	var servers []schema.Server
+
+	dataCenterId := c.Params("dataCenterId")
+
+	if err := database.DB.Find(&servers, "data_center_id = ? ", dataCenterId).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 
 	log.Println("HELLO THERE")
+
+	if len(servers) == 0 {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+			"error":   nil,
+			"servers": []interface{}{},
+		})
+	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
 
