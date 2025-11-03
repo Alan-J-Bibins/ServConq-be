@@ -44,6 +44,7 @@ func SetupProtectedEndpoints(app *fiber.App) {
 	app.Get("/teamMember/:dataCenterId", services.TeamGetMembershipByDataCenterId)
 
 	// Server
-	app.Post("/server", services.CreateServerRequestHandler)
-	app.Patch("/server", services.EditServerRequestHandler)
+	app.Get("/dataCenter/:dataCenterId/server", services.ServerGetRequestHandler)
+	app.Post("/server", services.ServerCreateRequestHandler) // TODO: Change Endpoint to better reflect REST convention
+	app.Patch("/server", services.ServerEditRequestHandler)
 }
