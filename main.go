@@ -29,7 +29,9 @@ func main() {
 	port := os.Getenv("PORT")
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:5173",
+		AllowOrigins:     "http://localhost:5173",
+		AllowHeaders:     "Content-Type",
+		AllowCredentials: true,
 	}))
 
 	endpoints.SetupUnprotectedEndpoints(app)

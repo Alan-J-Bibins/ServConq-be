@@ -142,3 +142,22 @@ func ServerGetRequestHandler(c *fiber.Ctx) error {
 		"serverList": serverList,
 	})
 }
+
+func ServerDeleteRequestHandler(c *fiber.Ctx) error {
+	dataCenterId := c.Params("dataCenterId")
+	serverId := c.Params("serverId")
+
+	// TODO: Check if user is an ADMIN or an OWNER
+
+	if err := database.DB.Delete(&schema.Server{}, "id = ? AND data_center_id = ?", serverId, dataCenterId).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"error":   nil,
+	})
+}
