@@ -28,7 +28,6 @@ func ServerCreateRequestHandler(c *fiber.Ctx) error {
 			"error":   "Bruhwtfareyoudoign" + err.Error(),
 		})
 	}
-	log.Println("[/home/alan/AJB/Projects/DBMS_GO_BOOM/ServConq-be/services/server.go:20] Content = ", content)
 
 	var userTeamMembership schema.TeamMember
 	if err := database.DB.Find(&userTeamMembership, "user_id = ? AND team_id = ?", userDetails.ID, content.TeamID).Error; err != nil {
@@ -59,6 +58,8 @@ func ServerCreateRequestHandler(c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
+
+		CreateLog(userTeamMembership.ID, content.DataCenterID, "CREATED SERVER")
 
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
@@ -144,10 +145,33 @@ func ServerGetRequestHandler(c *fiber.Ctx) error {
 }
 
 func ServerDeleteRequestHandler(c *fiber.Ctx) error {
+	userDetails := utils.GetUser(c)
 	dataCenterId := c.Params("dataCenterId")
 	serverId := c.Params("serverId")
 
-	// TODO: Check if user is an ADMIN or an OWNER
+	var dataCenter schema.DataCenter
+	if err := database.DB.First(&dataCenter, "id = ?", dataCenterId).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Invalid DataCenter ID",
+		})
+	}
+
+	var userTeamMember schema.TeamMember
+	if err := database.DB.Where("user_id = ? AND team_id = ?", userDetails.ID, dataCenter.TeamID).
+		First(&userTeamMember).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "Could not find team membership for user",
+		})
+	}
+
+	if userTeamMember.Role != schema.TeamMemberRoleOwner && userTeamMember.Role != schema.TeamMemberRoleAdmin {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"success": false,
+			"error":   "Unauthorized: Your member role does not allow this operation",
+		})
+	}
 
 	if err := database.DB.Delete(&schema.Server{}, "id = ? AND data_center_id = ?", serverId, dataCenterId).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -155,6 +179,8 @@ func ServerDeleteRequestHandler(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
+	CreateLog(userTeamMember.ID, dataCenterId, "DELETED SERVER")
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,

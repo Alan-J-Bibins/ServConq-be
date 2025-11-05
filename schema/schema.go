@@ -76,8 +76,6 @@ type Server struct {
 	Hostname         string `gorm:"not null"`
 	ConnectionString string `gorm:"unique;not null"`
 	CreatedAt        time.Time
-
-	Logs []Log `gorm:"foreignKey:ServerID"`
 }
 
 type ContainerImage struct {
@@ -88,12 +86,12 @@ type ContainerImage struct {
 }
 
 type Log struct {
-	ID           string `gorm:"primaryKey"`
-	DataCenterID string
-	ServerID     string
-	Message      string
-	Level        string
-	Timestamp    time.Time
+	ID           string     `gorm:"primaryKey" json:"id"`
+	DataCenterID string     `gorm:"not null" json:"dataCenterId"`
+	TeamMemberID string     `gorm:"not null" json:"teamMemberId"`
+	TeamMember   TeamMember `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"teamMember"`
+	Message      string     `gorm:"not null" json:"message"`
+	CreatedAt    time.Time  `json:"createdAt"`
 }
 
 // -------------------- Supporting Tables --------------------
