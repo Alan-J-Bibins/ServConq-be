@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"strings"
 
 	"github.com/Alan-J-Bibins/ServConq-be/database"
