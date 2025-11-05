@@ -2,6 +2,7 @@ package services
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -134,17 +135,31 @@ func AgentCommandRunHandler(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
-
 	var server schema.Server
-	if err := database.DB.Find(&server, "id = ?", serverId).Error; err!=nil{
+	if err := database.DB.Find(&server, "id = ?", serverId).Error; err != nil {
+		log.Println("SOMETHING HAPPENED: ", err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
 		})
 	}
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	jsonData, _ := json.Marshal(content)
+	resp, err := client.Post(server.ConnectionString+"/run", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Println("[/home/alan/AJB/Projects/DBMS_GO_BOOM/ServConq-be/services/agentsHandler.go:156]", fiber.Map{"error": err.Error()})
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	defer resp.Body.Close()
+
+	var respData map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&respData)
+	log.Println("[services/agentsHandler.go:157] respData = ", respData)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
-		"error":   nil,
+		"success":  true,
+		"error":    nil,
+		"response": respData,
 	})
 }

@@ -16,6 +16,7 @@ func SetupUnprotectedEndpoints(app *fiber.App) {
 	app.Post("/login", services.LoginRequestHandler)
 	app.Post("/register", services.RegisterRequestHandler)
 	app.Get("/stream/:dataCenterId", services.AgentMetricsSSEHandler)
+	app.Post("/run/:serverId", services.AgentCommandRunHandler)
 }
 
 func SetupProtectedEndpoints(app *fiber.App) {
