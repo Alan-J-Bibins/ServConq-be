@@ -30,53 +30,6 @@ type Metrics struct {
 	} `json:"os"`
 }
 
-func AgentMetricsGetRequestHandler(c *fiber.Ctx) error {
-	// dataCenterId := c.Params("dataCenterId")
-	// Get Servers for this data center from database, for now im using dummy data
-	var servers = []schema.Server{
-		{
-			ID:               "srv1",
-			DataCenterID:     "dc01",
-			Hostname:         "agent-1",
-			ConnectionString: "https://fresh-dogs-listen.loca.lt/metrics",
-			CreatedAt:        time.Now(),
-		},
-	}
-
-	metricsBatch := fiber.Map{}
-
-	for _, server := range servers {
-		metrics := Metrics{}
-		client := &http.Client{Timeout: 2 * time.Second} // avoid hanging requests
-
-		resp, err := client.Get(server.ConnectionString)
-		if err != nil {
-			metricsBatch[server.ID] = fiber.Map{
-				"error":   err.Error(),
-				"success": false,
-			}
-			continue
-		}
-
-		err = json.NewDecoder(resp.Body).Decode(&metrics)
-		resp.Body.Close()
-		if err != nil {
-			metricsBatch[server.ID] = fiber.Map{
-				"error":   "JSON decode failed",
-				"success": false,
-			}
-			continue
-		}
-
-		metricsBatch[server.ID] = fiber.Map{
-			"success": true,
-			"metrics": metrics,
-		}
-	}
-
-	return c.Status(fiber.StatusOK).JSON(metricsBatch)
-}
-
 func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 	// Set SSE headers
 	c.Set("Content-Type", "text/event-stream")
@@ -167,4 +120,31 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 
 	return nil
 
+}
+
+func AgentCommandRunHandler(c *fiber.Ctx) error {
+	serverId := c.Params("serverId")
+	type Content struct {
+		Command string `json:"command"`
+	}
+	var content Content
+	if err := c.BodyParser(&content); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	var server schema.Server
+	if err := database.DB.Find(&server, "id = ?", serverId).Error; err!=nil{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"error":   nil,
+	})
 }
