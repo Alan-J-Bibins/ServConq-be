@@ -58,7 +58,7 @@ func ServerCreateRequestHandler(c *fiber.Ctx) error {
 			})
 		}
 
-		CreateLog(userTeamMembership.ID, content.DataCenterID, "CREATED SERVER")
+		CreateLog(userTeamMembership.ID, content.DataCenterID, "Created Server: "+newServer.Hostname)
 
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"success": true,
@@ -172,6 +172,14 @@ func ServerDeleteRequestHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	var server schema.Server
+	if err := database.DB.Find(&server, "id = ? AND data_center_id = ?", serverId, dataCenterId).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
 	if err := database.DB.Delete(&schema.Server{}, "id = ? AND data_center_id = ?", serverId, dataCenterId).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -179,7 +187,7 @@ func ServerDeleteRequestHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	CreateLog(userTeamMember.ID, dataCenterId, "DELETED SERVER")
+	CreateLog(userTeamMember.ID, dataCenterId, "Deleted Server: "+server.Hostname)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
