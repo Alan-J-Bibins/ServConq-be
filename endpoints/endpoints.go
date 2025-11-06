@@ -17,6 +17,15 @@ func SetupUnprotectedEndpoints(app *fiber.App) {
 	app.Post("/register", services.RegisterRequestHandler)
 	app.Get("/stream/:dataCenterId", services.AgentMetricsSSEHandler)
 	app.Post("/run/:serverId", services.AgentCommandRunHandler)
+	signingKey := os.Getenv("SIGNING_KEY")
+
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte(signingKey)},
+	}))
+
+	app.Get("/user", services.UserGetRequestHandler)
+	app.Put("/user", services.UserUpdateRequestHandler)
+
 }
 
 func SetupProtectedEndpoints(app *fiber.App) {
@@ -49,4 +58,5 @@ func SetupProtectedEndpoints(app *fiber.App) {
 	app.Post("/server", services.ServerCreateRequestHandler) // TODO: Change Endpoint to better reflect REST convention
 	app.Patch("/server", services.ServerEditRequestHandler)
 	app.Delete("/dataCenter/:dataCenterId/server/:serverId", services.ServerDeleteRequestHandler)
+
 }
