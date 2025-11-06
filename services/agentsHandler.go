@@ -15,7 +15,6 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// Dummy metrics struct
 type Metrics struct {
 	PID struct {
 		CPU   float64 `json:"cpu"`
@@ -32,7 +31,6 @@ type Metrics struct {
 }
 
 func AgentMetricsSSEHandler(c *fiber.Ctx) error {
-	// Set SSE headers
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
@@ -40,7 +38,6 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 	log.Println("SEE HANDCLER IS HERE BROOOOO")
 
 	// dataCenterId := c.Params("dataCenterId")
-	// Get Servers for this data center from database, for now im using dummy data
 	var servers []schema.Server
 
 	dataCenterId := c.Params("dataCenterId")
@@ -64,9 +61,7 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 
 	client := &http.Client{Timeout: 5 * time.Second}
 
-	// Set the body stream writer
 	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
-		// Send initial comment to open stream
 		fmt.Fprint(w, ": connected\n\n")
 		if err := w.Flush(); err != nil {
 			log.Println("Flush error on initial:", err)
@@ -105,7 +100,6 @@ func AgentMetricsSSEHandler(c *fiber.Ctx) error {
 			}
 
 			outBytes, _ := json.Marshal(metricsBatch)
-			// Write SSE data
 			_, err := fmt.Fprintf(w, "data: %s\n\n", string(outBytes))
 			if err != nil {
 				log.Println("Error writing to stream:", err)
@@ -127,6 +121,7 @@ func AgentCommandRunHandler(c *fiber.Ctx) error {
 	serverId := c.Params("serverId")
 	type Content struct {
 		Command string `json:"command"`
+		Pwd     string `json:"pwd"`
 	}
 	var content Content
 	if err := c.BodyParser(&content); err != nil {
@@ -148,14 +143,12 @@ func AgentCommandRunHandler(c *fiber.Ctx) error {
 	jsonData, _ := json.Marshal(content)
 	resp, err := client.Post(server.ConnectionString+"/run", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Println("[/home/alan/AJB/Projects/DBMS_GO_BOOM/ServConq-be/services/agentsHandler.go:156]", fiber.Map{"error": err.Error()})
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	defer resp.Body.Close()
 
 	var respData map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&respData)
-	log.Println("[services/agentsHandler.go:157] respData = ", respData)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success":  true,
