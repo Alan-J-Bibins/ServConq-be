@@ -162,3 +162,35 @@ func DataCenterDeleteByIdRequestHandler(c *fiber.Ctx) error {
 		"error":   nil,
 	})
 }
+
+func DataCenterPatchByIdRequestHandler(c *fiber.Ctx) error {
+	dataCenterId := c.Params("dataCenterId")
+	type Content struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Location    string `json:"location"`
+	}
+
+	var content Content
+
+	if err := c.BodyParser(&content); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	if err := database.DB.Model(&schema.DataCenter{}).Where("id = ?", dataCenterId).
+		Updates(schema.DataCenter{Name: content.Name, Description: content.Description, Location: content.Location}).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"error":   nil,
+	})
+
+}
