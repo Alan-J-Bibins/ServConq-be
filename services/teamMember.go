@@ -31,3 +31,22 @@ func TeamGetMembershipByDataCenterId(c *fiber.Ctx) error {
 		"teamMember": teamMember,
 	})
 }
+
+func TeamGetMembershipByTeamId(c *fiber.Ctx) error {
+	userDetails := utils.GetUser(c)
+	teamId := c.Params("teamId")
+
+	var teamMember schema.TeamMember
+	if err := database.DB.Preload("User").Find(&teamMember, "team_id = ? AND user_id = ?", teamId, userDetails.ID).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":    true,
+		"error":      nil,
+		"teamMember": teamMember,
+	})
+}

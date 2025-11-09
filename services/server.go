@@ -85,8 +85,6 @@ func ServerEditRequestHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Check if the user is an OPERATOR or not
-
 	updates := map[string]interface{}{
 		"hostname": content.Hostname,
 	}

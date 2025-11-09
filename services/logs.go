@@ -11,7 +11,7 @@ import (
 func DataCenterLogsListRequestHandler(c *fiber.Ctx) error {
 	dataCenterId := c.Params("dataCenterId")
 	var results []schema.Log
-	if err := database.DB.Preload("TeamMember").Find(&results, "data_center_id = ?", dataCenterId).Order("created_at ASC").Error; err != nil {
+	if err := database.DB.Preload("TeamMember.User").Find(&results, "data_center_id = ?", dataCenterId).Order("created_at ASC").Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),

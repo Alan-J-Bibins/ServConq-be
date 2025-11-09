@@ -54,6 +54,7 @@ func SetupProtectedEndpoints(app *fiber.App) {
 	app.Get("/team", services.TeamListRequestHandler)
 	app.Get("/team/:teamId", services.TeamGetRequestHandler)
 	app.Post("/team/join", services.TeamJoinRequestHandler)
+	app.Get("/team/:teamId/teamMember", services.TeamGetMembershipByTeamId)
 	app.Get("/teamMember/:dataCenterId", services.TeamGetMembershipByDataCenterId)
 
 	// Server

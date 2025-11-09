@@ -87,7 +87,7 @@ type ContainerImage struct {
 type Log struct {
 	ID           string     `gorm:"primaryKey" json:"id"`
 	DataCenterID string     `gorm:"not null" json:"dataCenterId"`
-	TeamMemberID string     `gorm:"not null" json:"teamMemberId"`
+	TeamMemberID string     `json:"teamMemberId"`
 	TeamMember   TeamMember `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"teamMember"`
 	Message      string     `gorm:"not null" json:"message"`
 	CreatedAt    time.Time  `json:"createdAt"`
