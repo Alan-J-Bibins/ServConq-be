@@ -75,7 +75,7 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 
 	// Fetch datacenters belonging to these teams
 	var dataCenters []schema.DataCenter
-	if err := database.DB.Where("team_id IN ?", teamIDs).Find(&dataCenters).Error; err != nil {
+	if err := database.DB.Preload("Servers").Find(&dataCenters, "team_id IN ?", teamIDs).Error; err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
@@ -105,10 +105,12 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 		Description string `json:"description"`
 		TeamID      string `json:"team_id"`
 		TeamName    string `json:"team_name"`
+		ServerCount int    `json:"server_count"`
 	}
 
 	results := make([]DataCenterWithTeam, 0, len(dataCenters))
 	for _, dc := range dataCenters {
+		serverCount := len(dc.Servers)
 		results = append(results, DataCenterWithTeam{
 			ID:          dc.ID,
 			Name:        dc.Name,
@@ -116,6 +118,7 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 			Description: dc.Description,
 			TeamID:      dc.TeamID,
 			TeamName:    teamNameMap[dc.TeamID],
+			ServerCount: serverCount,
 		})
 	}
 
@@ -123,5 +126,39 @@ func DataCenterFindAllRequestHandler(c *fiber.Ctx) error {
 		"success":     true,
 		"error":       nil,
 		"datacenters": results,
+	})
+}
+
+func DataCenterFindByIdRequestHandler(c *fiber.Ctx) error {
+	dataCenterId := c.Params("dataCenterId")
+
+	var dataCenter schema.DataCenter
+	if err := database.DB.Preload("Team").Find(&dataCenter, "id = ?", dataCenterId).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success":    true,
+		"error":      nil,
+		"dataCenter": dataCenter,
+	})
+}
+
+func DataCenterDeleteByIdRequestHandler(c *fiber.Ctx) error {
+	dataCenterId := c.Params("dataCenterId")
+
+	if err := database.DB.Delete(&schema.DataCenter{}, "id = ?", dataCenterId).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"error":   nil,
 	})
 }

@@ -57,39 +57,38 @@ type Team struct {
 // -------------------- Infrastructure --------------------
 
 type DataCenter struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Location    string
-	Description string
-	CreatedAt   time.Time
-	TeamID      string
-	Team        Team `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	ID          string    `gorm:"primaryKey" json:"id"`
+	Name        string    `gorm:"unique;not null" json:"name"`
+	Location    string    `json:"location"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"createdAt"`
+	TeamID      string    `json:"teamId"`
+	Team        Team      `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"team"`
 
-	Servers []Server `gorm:"foreignKey:DataCenterID"`
-
-	Logs []Log `gorm:"foreignKey:DataCenterID"`
+	Servers []Server `gorm:"foreignKey:DataCenterID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"servers"`
+	Logs    []Log    `gorm:"foreignKey:DataCenterID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"logs"`
 }
 
 type Server struct {
-	ID               string `gorm:"primaryKey"`
-	DataCenterID     string
-	Hostname         string `gorm:"not null"`
-	ConnectionString string `gorm:"unique;not null"`
-	CreatedAt        time.Time
+	ID               string    `gorm:"primaryKey" json:"id"`
+	DataCenterID     string    `json:"dataCenterId"`
+	Hostname         string    `gorm:"not null" json:"hostname"`
+	ConnectionString string    `gorm:"unique;not null" json:"connectionString"`
+	CreatedAt        time.Time `json:"createdAt"`
 }
 
 type ContainerImage struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string
-	Version     string
-	RegistryURL string
+	ID          string `gorm:"primaryKey" json:"id"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	RegistryURL string `json:"registryURL"`
 }
 
 type Log struct {
 	ID           string     `gorm:"primaryKey" json:"id"`
 	DataCenterID string     `gorm:"not null" json:"dataCenterId"`
 	TeamMemberID string     `gorm:"not null" json:"teamMemberId"`
-	TeamMember   TeamMember `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"teamMember"`
+	TeamMember   TeamMember `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"teamMember"`
 	Message      string     `gorm:"not null" json:"message"`
 	CreatedAt    time.Time  `json:"createdAt"`
 }

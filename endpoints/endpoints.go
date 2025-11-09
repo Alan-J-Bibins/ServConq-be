@@ -45,6 +45,8 @@ func SetupProtectedEndpoints(app *fiber.App) {
 	app.Post("/dataCenter", services.DataCenterCreateRequestHandler)
 	app.Get("/dataCenter", services.DataCenterFindAllRequestHandler)
 	app.Get("/dataCenter/:dataCenterId/log", services.DataCenterLogsListRequestHandler)
+	app.Get("/dataCenter/:dataCenterId", services.DataCenterFindByIdRequestHandler)
+	app.Delete("/dataCenter/:dataCenterId", services.DataCenterDeleteByIdRequestHandler)
 
 	// Team
 	app.Post("/team", services.TeamCreateRequestHandler)
